@@ -1,58 +1,163 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Taskit
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicação web para **gestão de projetos e tarefas** com foco em organização visual, acompanhamento de progresso e uma interface moderna inspirada em dashboards mobile.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Visão geral
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+O `Taskit` permite que usuários autenticados:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- criem e editem projetos;
+- adicionem tarefas vinculadas a cada projeto;
+- acompanhem status como **a fazer**, **em andamento** e **concluído**;
+- visualizem métricas rápidas no `dashboard`;
+- gerenciem tudo em um layout consistente com identidade visual lilás/card-based.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🚀 Funcionalidades principais
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Autenticação
+- login, registro e recuperação de senha com `Laravel Breeze`;
+- área protegida para cada usuário;
+- edição de perfil.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### Projetos
+- CRUD completo de projetos;
+- visualização de detalhes do projeto;
+- contagem de tarefas por status;
+- progresso geral por projeto.
 
-## Agentic Development
+### Tarefas
+- CRUD completo de tarefas dentro de cada projeto;
+- vínculo aninhado com rotas do tipo `projects.tasks.*`;
+- validação de acesso por usuário/projeto;
+- organização por status.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Interface
+- landing page pública personalizada;
+- dashboard com cards de resumo;
+- telas redesenhadas de projetos e tarefas;
+- estilização com `Tailwind CSS` + `Vite`.
 
-```bash
-composer require laravel/boost --dev
+---
 
-php artisan boost:install
+## 🧱 Stack utilizada
+
+| Camada | Tecnologia |
+|---|---|
+| Backend | `PHP 8.3`, `Laravel 13` |
+| Frontend | `Blade`, `Tailwind CSS`, `Alpine.js` |
+| Build | `Vite` |
+| Auth | `Laravel Breeze` |
+| Testes | `Pest` / `PHPUnit` |
+
+---
+
+## 📂 Estrutura principal
+
+```text
+app/Http/Controllers/
+resources/views/
+  dashboard.blade.php
+  welcome.blade.php
+  projects/
+    index.blade.php
+    show.blade.php
+    create.blade.php
+    edit.blade.php
+    tasks/
+routes/web.php
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## ▶️ Como rodar o projeto
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Instalar dependências
+```bash
+composer install
+npm install
+```
 
-## Code of Conduct
+### 2. Configurar ambiente
+```bash
+copy .env.example .env
+php artisan key:generate
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+> Se preferir usar `SQLite`, crie o arquivo `database/database.sqlite` e ajuste o `.env`.
 
-## Security Vulnerabilities
+### 3. Rodar migrations
+```bash
+php artisan migrate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4. Subir ambiente de desenvolvimento
+```bash
+composer run dev
+```
 
-## License
+Isso inicia:
+- servidor Laravel
+- fila/listener
+- logs com `pail`
+- Vite em modo dev
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 🛠️ Comandos úteis
+
+```bash
+# Rodar frontend em produção
+npm run build
+
+# Executar testes
+php artisan test
+
+# Limpar e recachear views
+php artisan view:clear
+php artisan view:cache
+```
+
+---
+
+## 🔐 Rotas principais
+
+| Rota | Descrição |
+|---|---|
+| `/` | Landing page pública |
+| `/login` | Login |
+| `/register` | Cadastro |
+| `/dashboard` | Resumo geral do usuário |
+| `/projects` | Lista de projetos |
+| `/projects/{project}` | Detalhes do projeto |
+| `/projects/{project}/tasks` | Lista de tarefas do projeto |
+
+---
+
+## ✅ Status atual
+
+Validação mais recente do projeto:
+
+- `npm run build` → **ok**
+- `php artisan test` → **30 testes passando**
+
+---
+
+## 📌 Objetivo do projeto
+
+Este projeto foi construído para demonstrar um fluxo completo de **gestão de projetos e tarefas** com Laravel, unindo:
+
+- autenticação;
+- autorização por usuário;
+- CRUD aninhado;
+- dashboard visual;
+- interface refinada e consistente.
+
+---
+
+## 📄 Licença
+
+Projeto disponível sob a licença `MIT`.
