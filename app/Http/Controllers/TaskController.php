@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Project;
 use App\Models\Task;
 
@@ -13,9 +14,11 @@ class TaskController extends Controller
      */
     public function index(Project $project)
     {
-        $tasks = $project->tasks()->get();
+        $this->authorizeProjectAccess($project);
 
-        return view("projects.tasks.index", compact("tasks"));
+        $tasks = $project->tasks()->latest()->get();
+
+        return view("projects.tasks.index", compact("tasks", "project"));
     }
 
     /**
@@ -23,6 +26,8 @@ class TaskController extends Controller
      */
     public function create(Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         return view("projects.tasks.create", compact("project"));
     }
 
@@ -31,13 +36,15 @@ class TaskController extends Controller
      */
     public function store(Request $request, Project $project)
     {
+        $this->authorizeProjectAccess($project);
+
         $data = $request->validate([
-            "title"=> "required|string|max:100",
+            "title" => "required|string|max:100",
             'description' => 'nullable|string',
-            'status' => 'required|string'
+            'status' => 'required|in:pending,in_progress,done',
         ]);
 
-        $data['user_id'] = auth()->id();
+        $data['user_id'] = Auth::id();
 
         $project->tasks()->create($data);
 
@@ -51,10 +58,10 @@ class TaskController extends Controller
      * Display the specified resource.
      */
     public function show(Project $project, Task $task)
-    {   
-        if ($task->project_id !== $project->id) {
-            abort(404);
-        }
+    {
+        $this->authorizeProjectAccess($project);
+        $this->authorizeTaskAccess($project, $task);
+
         return view('projects.tasks.show', compact('project', 'task'));
     }
 
@@ -63,9 +70,9 @@ class TaskController extends Controller
      */
     public function edit(Project $project, Task $task)
     {
-        if ($task->project_id !== $project->id) {
-            abort(404);
-        }
+        $this->authorizeProjectAccess($project);
+        $this->authorizeTaskAccess($project, $task);
+
         return view('projects.tasks.edit', compact('project', 'task'));
     }
 
@@ -74,16 +81,15 @@ class TaskController extends Controller
      */
     public function update(Request $request, Project $project, Task $task)
     {
-        if ($task->project_id !== $project->id) {
-            abort(404);
-        }
+        $this->authorizeProjectAccess($project);
+        $this->authorizeTaskAccess($project, $task);
 
         $data = $request->validate([
-            "title"=> "required|string|max:100",
+            "title" => "required|string|max:100",
             'description' => 'nullable|string',
-            'status' => 'required|string'
+            'status' => 'required|in:pending,in_progress,done',
         ]);
-        
+
         $task->update($data);
 
         return redirect()->route(
@@ -97,15 +103,24 @@ class TaskController extends Controller
      */
     public function destroy(Project $project, Task $task)
     {
-        if ($task->project_id !== $project->id) {
-            abort(404);
-        }
+        $this->authorizeProjectAccess($project);
+        $this->authorizeTaskAccess($project, $task);
 
         $task->delete();
 
         return redirect()->route(
             'projects.tasks.index',
             $project
-        ); 
+        );
+    }
+
+    private function authorizeProjectAccess(Project $project): void
+    {
+        abort_unless($project->user_id === Auth::id(), 403);
+    }
+
+    private function authorizeTaskAccess(Project $project, Task $task): void
+    {
+        abort_if($task->project_id !== $project->id, 404);
     }
 }

@@ -1,8 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProjectController extends Controller
 {
@@ -11,9 +13,19 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        $user = auth()->user();
-        $projects = auth()->user()->projects()->get();
-        return view("projects.index", compact("projects", "user"));
+        $user = Auth::user();
+        $projects = Project::query()
+            ->where('user_id', $user->id)
+            ->withCount('tasks')
+            ->withCount([
+                'tasks as pending_tasks_count' => fn ($query) => $query->where('status', 'pending'),
+                'tasks as in_progress_tasks_count' => fn ($query) => $query->where('status', 'in_progress'),
+                'tasks as done_tasks_count' => fn ($query) => $query->where('status', 'done'),
+            ])
+            ->latest()
+            ->get();
+
+        return view('projects.index', compact('projects', 'user'));
     }
 
     /**
@@ -21,7 +33,7 @@ class ProjectController extends Controller
      */
     public function create()
     {
-        return view("projects.create");
+        return view('projects.create');
     }
 
     /**
@@ -30,15 +42,15 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            "name"=> "required|string|max:255",
-            "description" => "nullable|string"
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
         ]);
 
-        $data['user_id'] = auth()->id();
+        $data['user_id'] = Auth::id();
 
         Project::create($data);
 
-        return redirect()->route("projects.index")->with("success","Projeto criado com sucesso");
+        return redirect()->route('projects.index')->with('success', 'Projeto criado com sucesso');
     }
 
     /**
@@ -46,11 +58,20 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
-        if ($project->user_id != auth()->id()) {
+        if ($project->user_id != Auth::id()) {
             abort(403);
         }
-        
-        return view("projects.show", compact("project"));
+
+        $project
+            ->load(['tasks' => fn ($query) => $query->latest()])
+            ->loadCount([
+                'tasks',
+                'tasks as pending_tasks_count' => fn ($query) => $query->where('status', 'pending'),
+                'tasks as in_progress_tasks_count' => fn ($query) => $query->where('status', 'in_progress'),
+                'tasks as done_tasks_count' => fn ($query) => $query->where('status', 'done'),
+            ]);
+
+        return view('projects.show', compact('project'));
     }
 
     /**
@@ -58,10 +79,11 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
-        if ($project->user_id != auth()->id()) {
+        if ($project->user_id != Auth::id()) {
             abort(403);
         }
-        return view("projects.edit", compact("project"));
+
+        return view('projects.edit', compact('project'));
     }
 
     /**
@@ -69,18 +91,18 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
-        if ($project->user_id != auth()->id()) {
+        if ($project->user_id != Auth::id()) {
             abort(403);
         }
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
         ]);
 
         $project->update($data);
 
-        return redirect()->route("projects.index")->with("success","Projeto editado com sucesso!");
+        return redirect()->route('projects.index')->with('success', 'Projeto editado com sucesso!');
     }
 
     /**
@@ -88,11 +110,12 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
-        if ($project->user_id != auth()->id()) {
+        if ($project->user_id != Auth::id()) {
             abort(403);
         }
 
         $project->delete();
-        return redirect()->route("projects.index")->with("success","Projeto removido com sucesso!");
+
+        return redirect()->route('projects.index')->with('success', 'Projeto removido com sucesso!');
     }
 }
